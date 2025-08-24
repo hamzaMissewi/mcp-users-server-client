@@ -1,21 +1,21 @@
 import {
   McpServer,
   ResourceTemplate,
-} from "@modelcontextprotocol/sdk/server/mcp.js"
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
-import { z } from "zod"
-import fs from "node:fs/promises"
-import { CreateMessageResultSchema } from "@modelcontextprotocol/sdk/types.js"
+} from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { z } from "zod";
+import fs from "node:fs/promises";
+import { CreateMessageResultSchema } from "@modelcontextprotocol/sdk/types.js";
 
 const server = new McpServer({
-  name: "test-video",
+  name: "test-server",
   version: "1.0.0",
   capabilities: {
     resources: {},
     tools: {},
     prompts: {},
   },
-})
+});
 
 server.resource(
   "users",
@@ -25,10 +25,10 @@ server.resource(
     title: "Users",
     mimeType: "application/json",
   },
-  async uri => {
+  async (uri) => {
     const users = await import("./data/users.json", {
       with: { type: "json" },
-    }).then(m => m.default)
+    }).then((m) => m.default);
 
     return {
       contents: [
@@ -38,9 +38,9 @@ server.resource(
           mimeType: "application/json",
         },
       ],
-    }
+    };
   }
-)
+);
 
 server.resource(
   "user-details",
@@ -53,8 +53,8 @@ server.resource(
   async (uri, { userId }) => {
     const users = await import("./data/users.json", {
       with: { type: "json" },
-    }).then(m => m.default)
-    const user = users.find(u => u.id === parseInt(userId as string))
+    }).then((m) => m.default);
+    const user = users.find((u) => u.id === parseInt(userId as string));
 
     if (user == null) {
       return {
@@ -65,7 +65,7 @@ server.resource(
             mimeType: "application/json",
           },
         ],
-      }
+      };
     }
 
     return {
@@ -76,9 +76,9 @@ server.resource(
           mimeType: "application/json",
         },
       ],
-    }
+    };
   }
-)
+);
 
 server.tool(
   "create-user",
@@ -96,20 +96,20 @@ server.tool(
     idempotentHint: false,
     openWorldHint: true,
   },
-  async params => {
+  async (params) => {
     try {
-      const id = await createUser(params)
+      const id = await createUser(params);
 
       return {
         content: [{ type: "text", text: `User ${id} created successfully` }],
-      }
+      };
     } catch {
       return {
         content: [{ type: "text", text: "Failed to save user" }],
-      }
+      };
     }
   }
-)
+);
 
 server.tool(
   "create-random-user",
@@ -139,12 +139,12 @@ server.tool(
         },
       },
       CreateMessageResultSchema
-    )
+    );
 
     if (res.content.type !== "text") {
       return {
         content: [{ type: "text", text: "Failed to generate user data" }],
-      }
+      };
     }
 
     try {
@@ -154,19 +154,19 @@ server.tool(
           .replace(/^```json/, "")
           .replace(/```$/, "")
           .trim()
-      )
+      );
 
-      const id = await createUser(fakeUser)
+      const id = await createUser(fakeUser);
       return {
         content: [{ type: "text", text: `User ${id} created successfully` }],
-      }
+      };
     } catch {
       return {
         content: [{ type: "text", text: "Failed to generate user data" }],
-      }
+      };
     }
   }
-)
+);
 
 server.prompt(
   "generate-fake-user",
@@ -185,32 +185,32 @@ server.prompt(
           },
         },
       ],
-    }
+    };
   }
-)
+);
 
 async function createUser(user: {
-  name: string
-  email: string
-  address: string
-  phone: string
+  name: string;
+  email: string;
+  address: string;
+  phone: string;
 }) {
   const users = await import("./data/users.json", {
     with: { type: "json" },
-  }).then(m => m.default)
+  }).then((m) => m.default);
 
-  const id = users.length + 1
+  const id = users.length + 1;
 
-  users.push({ id, ...user })
+  users.push({ id, ...user });
 
-  await fs.writeFile("./src/data/users.json", JSON.stringify(users, null, 2))
+  await fs.writeFile("./src/data/users.json", JSON.stringify(users, null, 2));
 
-  return id
+  return id;
 }
 
 async function main() {
-  const transport = new StdioServerTransport()
-  await server.connect(transport)
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
 }
 
-main()
+main();

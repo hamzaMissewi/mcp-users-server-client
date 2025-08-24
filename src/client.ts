@@ -10,8 +10,6 @@ import {
   Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 import { generateText, jsonSchema, ToolSet } from "ai";
-// import fs from "node:fs/promises";
-import os from "os";
 import path from "path";
 import * as fs from "fs/promises";
 
@@ -241,30 +239,20 @@ async function handlePrompt(prompt: Prompt) {
       console.log("AI output did not contain a valid user payload.");
       continue;
     }
-    const { tools } = await mcp.listTools();
 
-    // const tool = tools.find((tool) => tool.name === "save-user-to-json-file");
-    const tool = tools.find((tool) => tool.name === "create-user");
-    if (!tool) {
-      console.log("Tool not found: create-user");
-      continue;
-    }
-
-    // 3) Use MCP tool to persist
-    console.log("tool details: ", tool);
     const res = await mcp.callTool({
-      name: tool.name,
-      arguments: user,
-      // content: [{ type: "text", text: aiText }],
+      // name: "save-user-to-json-file",
+      name: "create-user",
+      arguments: { user },
+      // arguments: { text: aiText },
     });
 
-    // console.log(res.toolResult);
-    // console.log((resContent as [{ text: string }])[0].text);
-
     console.log(
+      "tool result text: ",
       (res.content as [{ text: string }])[0]?.text ??
         "Create-user: no response text"
     );
+
     if (typeof res.content !== "string") continue;
 
     const resContent = JSON.parse(res.content);
@@ -311,7 +299,6 @@ function parseUserFromText(
 
     const email: string | undefined = obj.email;
 
-    // if (!name || !email || !address || !phone) return null;
     if (!name || !email) return null;
 
     return { name, email, address, phone };
@@ -338,5 +325,14 @@ async function handleServerMessagePrompt(message: PromptMessage) {
 
   return text;
 }
+// async function queryAIWithMCP(prompt: string, mcpServerUrl: string) {
+//   const message = await anthropic.messages.create({
+//     model: "claude-3-5-sonnet-20240620",
+//     max_tokens: 1024,
+//     messages: [{ role: "user", content: prompt }],
+//     tools: [{ type: "mcp", url: mcpServerUrl }], // Connect to your MCP server
+//   });
+//   return message.content;
+// }
 
 main();
